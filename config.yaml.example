@@ -1,7 +1,7 @@
 nextflow_path: /home/ubuntu/nextflow/nextflow
-input_dir: C:/Alpha/Github/bioinformatics-sp3/pipeline-watcher/input
-output_dir: C:/Alpha/Github/bioinformatics-sp3/pipeline-watcher/output
-log_dir: C:/Alpha/Github/bioinformatics-sp3/pipeline-watcher/logs
+input_dir: /home/ubuntu/pipeline-watcher/input
+output_dir: /home/ubuntu/pipeline-watcher/output
+log_dir: /home/ubuntu/pipeline-watcher/logs
 tower_access_token: <Token>
 tower_address: <IP>
 tb-pipeline:
