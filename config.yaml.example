@@ -1,0 +1,25 @@
+nextflow_path: /home/ubuntu/nextflow/nextflow
+input_dir: C:/Alpha/Github/bioinformatics-sp3/pipeline-watcher/input
+output_dir: C:/Alpha/Github/bioinformatics-sp3/pipeline-watcher/output
+log_dir: C:/Alpha/Github/bioinformatics-sp3/pipeline-watcher/logs
+tower_access_token: <Token>
+tower_address: <IP>
+pipelines:
+  - name: 'nf-core/scrnaseq'
+    prefix: 'scrnaseq'
+    command_pipeline: 'nf-core/scrnaseq'
+    config: null
+    params:
+     - outdir: '/home/ubuntu/pipeline-watcher/output/test_output/'
+    profile: test,docker
+    version: null
+    with_tower: false
+  - name: 'nf-core/smrnaseq'
+    prefix: 'smrnaseq'
+    command_pipeline: 'nf-core/smrnaseq'
+    config: null
+    params:
+      - outdir: '/home/ubuntu/pipeline-watcher/output/test_output/'
+    profile: test,docker
+    version: null
+    with_tower: false

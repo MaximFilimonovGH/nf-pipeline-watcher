@@ -1,0 +1,13 @@
+[Unit]
+Description=Pipeline Watcher Service
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/pipeline-watcher
+ExecStart=/usr/bin/python3 /home/ubuntu/pipeline-watcher/watcher.py
+Environment=HOME=/home/ubuntu
+RemainAfterExit=True
+
+[Install]
+WantedBy=default.target

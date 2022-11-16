@@ -1,0 +1,11 @@
+# testing folders and files
+input
+logs
+output
+pipelines
+
+background.log
+
+# configuration files with sensitive data
+config.yaml
+config_ubuntu.yaml
