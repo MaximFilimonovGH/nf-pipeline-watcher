@@ -4,7 +4,28 @@ output_dir: C:/Alpha/Github/bioinformatics-sp3/pipeline-watcher/output
 log_dir: C:/Alpha/Github/bioinformatics-sp3/pipeline-watcher/logs
 tower_access_token: <Token>
 tower_address: <IP>
+tb-pipeline:
+  name: 'tb-pipeline'
+  prefix: 'tb'
+  command_pipeline: '/home/ubuntu/tb-pipeline/main.nf'
+  config: null
+  profile: 'docker'
+  version: '20.11.0-edge'
+  params:
+    - unmix_myco: 'no'
+    - kraken_db: 'kraken'
+    - bowtie2_index: 'bowtie2_index'
+    - bowtie_index_name: 'bowtie_index_name'
+  with_tower: false
 pipelines:
+  - name: 'tb-pipeline/stub'
+    prefix: 'tb-stub'
+    command_pipeline: '/home/ubuntu/tb-pipeline/main.nf -stub'
+    config: '/home/ubuntu/tb-pipeline/testing.config'
+    params: null
+    profile: null
+    version: '20.11.0-edge'
+    with_tower: true
   - name: 'nf-core/scrnaseq'
     prefix: 'scrnaseq'
     command_pipeline: 'nf-core/scrnaseq'
