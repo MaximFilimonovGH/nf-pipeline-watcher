@@ -3,7 +3,6 @@ import time
 from datetime import datetime
 import subprocess
 import re
-import copy
 
 # import pyyaml
 import yaml
@@ -25,8 +24,6 @@ service_log_file = os.path.join(log_dir, 'service.log')
 processed_files_location = os.path.join(output_dir, 'processed')
 # running location for pipelines
 run_location = os.path.join(output_dir, 'run_location')
-
-
 
 ## function to return files in a directory
 def files_in_directory(dir: str):
@@ -119,7 +116,6 @@ def launch_pipeline(file: str, prefix: str):
     # get log and err file names
     log_file = os.path.join(log_dir, log_filename + '.log')
     err_file = os.path.join(log_dir, log_filename + '.err')
-
 
     with open(service_log_file, 'a') as sf:
         sf.write(f"{datetime.now().replace(microsecond=0)}: Processing file: {file}\n")
@@ -237,7 +233,7 @@ def file_watcher(dir: str, poll_time: int):
             continue
         else:
             with open(service_log_file, 'a') as sf:
-                sf.write(f'New files detected: {dif_list}\n')
+                sf.write(f'{datetime.now().replace(microsecond=0)}: New files detected: {dif_list}\n')
 
             # cycle through all the new files
             for f in dif_list:
@@ -289,8 +285,6 @@ def file_watcher(dir: str, poll_time: int):
                 except Exception as e:
                     with open(service_log_file, 'a') as sf:
                         sf.write(f'{datetime.now().replace(microsecond=0)}: An error while launching the pipeline: {e}\n')    
-   
-
                 
 ## function to export tower token if necessary
 def export_tower_token(token):
