@@ -18,11 +18,14 @@ output_dir = config['output_dir']
 log_dir = config['log_dir']
 tower_access_token = config['tower_access_token']
 tower_address = config['tower_address']
-tb_pipeline = config['tb-pipeline']
+# tb_pipeline = config['tb-pipeline']
 pipelines = config['pipelines']
 
 service_log_file = os.path.join(log_dir, 'service.log')
 processed_files_location = os.path.join(output_dir, 'processed')
+# running location for pipelines
+run_location = os.path.join(output_dir, 'run_location')
+
 
 
 ## function to return files in a directory
@@ -54,7 +57,7 @@ def get_prefix(file: str):
         return prefix
 
 ## function to generate command for launching pipeline based on params etc.
-def get_nextflow_run_command(pipeline):
+def get_nextflow_run_command(pipeline, input_path, output_path):
     cmd = ''
     # check if there is a version supplied
     if pipeline['version']:
@@ -62,45 +65,67 @@ def get_nextflow_run_command(pipeline):
     else:
         cmd = f"{nextflow_path} run"
     # add main pipeline command
-    cmd += f" {pipeline['command_pipeline']}"
+    cmd += f" {pipeline['run_command']}"
     # add profile string if supplied
     if pipeline['profile']:
         cmd += f" -profile {pipeline['profile']}"
     # add config string if supplied
     if pipeline['config']:
         cmd += f" -config {pipeline['config']}"
-    # form parameters string is supplied
+    # check if tower is needed
+    if pipeline['with_tower']:
+        if pipeline['with_tower'] == True:
+            cmd += f" -with-tower {tower_address}"
+    ## form parameters string is supplied
     if pipeline['params']:
         param_string = ''
         for param in pipeline['params']:
             param_string += f" --{list(param.keys())[0]} {param[list(param.keys())[0]]}"
         # add params to cmd
         cmd += param_string
-    # check if tower is needed
-    if pipeline['with_tower']:
-        if pipeline['with_tower'] == True:
-            cmd += f" -with-tower {tower_address}"
+    ## process input parameter
+    # check the name of the input parameter for the pipeline
+    if pipeline['input_parameter']:
+        # input parameter is a directory, adjust input_path accordingly
+        if pipeline['input_type'] == 'directory':
+            pipeline_input_dir = os.path.abspath(os.path.join(input_path, os.pardir))
+            cmd += f" --{pipeline['input_parameter']} {pipeline_input_dir}"
+            # 'tb' pipeline specific parameter depending on the number of files
+            if pipeline['prefix'] == 'tb':
+                if len(files_in_directory(pipeline_input_dir)) == 2:
+                    cmd += f" --filetype fastq"
+                    cmd += f" --pattern \"*_R{{1,2}}.fastq.gz\""
+                else:
+                    cmd += f" --filetype bam"
+
+        # input parameter is file
+        else:
+            cmd += f" --{pipeline['input_parameter']} {input_path}"
+    # check for output parameter name and append it
+    if pipeline['output_parameter']:
+        cmd += f" --{pipeline['output_parameter']} {output_path}"
+
     # add background parameter for nextflow run
     cmd += " -bg"
     return cmd
 
 # function to launch pipelines
-def launch_pipeline(file):
+def launch_pipeline(file, prefix):
     original_location = os.getcwd()
     # get basename of the file
     file_basename = os.path.basename(file)
-    # get prefix first
-    prefix = get_prefix(file_basename)
-    log_filename = os.path.splitext(file_basename)[0]
+    # log filename
+    log_filename = f"{prefix}_{os.path.splitext(file_basename)[0]}"
     # get log and err file names
     log_file = os.path.join(log_dir, log_filename + '.log')
     err_file = os.path.join(log_dir, log_filename + '.err')
-    # running location for pipeline
-    run_location = os.path.join(output_dir, 'run_location')
+
+
     with open(service_log_file, 'a') as sf:
         sf.write(f"{datetime.now().replace(microsecond=0)}: Processing file: {file}\n")
 
     # check the prefix
+    # some testing prefixes
     if prefix.lower() == 'test':
         cmd = 'ls -a'
         with open(service_log_file, 'a') as sf:
@@ -108,7 +133,7 @@ def launch_pipeline(file):
             sf.write(f"{datetime.now().replace(microsecond=0)}: See {log_file} for details.\n")
         with open(log_file, 'w+') as log_f:
             subprocess.Popen(cmd, stdout=log_f, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
-        return 1
+        return
     elif prefix.lower() == 'nextflow':
         cmd = f'{nextflow_path} -version'
         with open(service_log_file, 'a') as sf:
@@ -116,7 +141,7 @@ def launch_pipeline(file):
             sf.write(f"{datetime.now().replace(microsecond=0)}: See {log_file} for details.\n")
         with open(log_file, 'w+') as log_f:
             subprocess.Popen(cmd, stdout=log_f, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
-        return 1
+        return
     elif prefix.lower() == 'path':
         cmd = 'echo $PATH'
         with open(service_log_file, 'a') as sf:
@@ -124,7 +149,7 @@ def launch_pipeline(file):
             sf.write(f"{datetime.now().replace(microsecond=0)}: See {log_file} for details.\n")
         with open(log_file, 'w+') as log_f:
             subprocess.Popen(cmd, stdout=log_f, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
-        return 1
+        return
     elif prefix.lower() == 'home':
         cmd = 'echo $HOME'
         with open(service_log_file, 'a') as sf:
@@ -132,47 +157,32 @@ def launch_pipeline(file):
             sf.write(f"{datetime.now().replace(microsecond=0)}: See {log_file} for details.\n")
         with open(log_file, 'w+') as log_f:
             subprocess.Popen(cmd, stdout=log_f, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
-        return 1
-    # cycle through pipelines if not 'test'
+        return
+
+    # cycle through pipelines if not any of the testing prefixes
     for pipeline in pipelines:
         # if prefix is found then form a command to launch
         if prefix.lower() == pipeline['prefix']:
-            cmd = get_nextflow_run_command(pipeline)
+            # input path is the file itself
+            input_path = file
+            # generate output path in output directory based on file basename without extension
+            output_path = os.path.join(output_dir, os.path.splitext(file_basename)[0])
+            cmd = get_nextflow_run_command(pipeline, input_path, output_path)
             with open(service_log_file, 'a') as sf:
                 sf.write(f"{datetime.now().replace(microsecond=0)}: Launching pipeline based on prefix: {prefix}. Command: {cmd}\n")
                 sf.write(f"{datetime.now().replace(microsecond=0)}: See {log_file} for details.\n")
             with open(log_file, 'w+') as log_f:
                 # with open(err_file, 'w+') as err_f:
+                # log_f.write(f"Log file working?")
                 subprocess.Popen(cmd, stdout=log_f, stderr=subprocess.STDOUT, universal_newlines=True, shell=True, cwd=run_location)
-            return 1
+            return
+
     # if no pipeline found just print that not a correct prefix for the file
     with open(service_log_file, 'a') as sf:
         sf.write(f"{datetime.now().replace(microsecond=0)}: No prefix found. See {log_file} for details.\n\n")
     with open(log_file, 'w+') as log_f:
         subprocess.Popen('echo "Not a correct prefix"', stdout=log_f, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
-
-## function to launch tb pipeline
-def launch_tb_pipeline(dir, filetype):
-    ## generate command for launching tb pipeline
-    tb_pipeline_config = copy.deepcopy(tb_pipeline)
-    # add filetype and output_dir to the parameters
-    tb_pipeline_config['params'].append({"input_dir": dir})
-    tb_pipeline_config['params'].append({"filetype": filetype})
-    # add pattern if filetype == fastq
-    if filetype == 'fastq':
-        tb_pipeline_config['params'].append({"pattern": "*_R{1,2}.fastq.gz"})
-    # add output dir to the parameters
-    tb_pipeline_config['params'].append({"output_dir": output_dir})
-    # generate command
-    cmd = get_nextflow_run_command(tb_pipeline_config)
-
-    # with open(service_log_file, 'a') as sf:
-    #     sf.write(f"{datetime.now().replace(microsecond=0)}: Launching tb pipeline. Command: {cmd}\n")
-    #     sf.write(f"{datetime.now().replace(microsecond=0)}: See {log_file} for details.\n")
-    # with open(log_file, 'w+') as log_f:
-    #     subprocess.Popen(cmd, stdout=log_f, stderr=subprocess.STDOUT, universal_newlines=True, shell=True, cwd=run_location)
-    return 1
-
+        
 ## detect file pairs based on possible paired file extensions
 # possible file extensions: 
 #   - "*_R{1,2}.fastq.gz"
@@ -219,6 +229,8 @@ def file_watcher(dir: str, poll_time: int):
 
         # check if processed files directory exists and create it if not
         os.makedirs(processed_files_location, exist_ok=True)
+        # check if run location exists and create it if not
+        os.makedirs(run_location, exist_ok=True)
 
         # if no difference just continue
         if len(dif_list) == 0:
@@ -226,16 +238,18 @@ def file_watcher(dir: str, poll_time: int):
         else:
             with open(service_log_file, 'a') as sf:
                 sf.write(f'New files detected: {dif_list}\n')
+
             # cycle through all the new files
             for f in dif_list:
-                # check the prefix
-                prefix = get_prefix(f)
-
-                # if prefix is tb, execute specific code to tb pipeline
-                if prefix == 'tb':
-                    # check if the file needs a pair and detect it
+                # check if the file needs a pair and detect it
+                try:
                     pair_file = check_and_detect_pair(f, dif_list)
+                
+                except Exception as e:
+                    with open(service_log_file, 'a') as sf:
+                        sf.write(f'{datetime.now().replace(microsecond=0)}: An error while trying to find if the file needs a pair and/or finding that pair\n')
 
+                try:
                     # if file needs a pair but for some reason it wasn't found yet (possibly directory read after 1st file was uploaded but 2nd file was not)
                     if len(pair_file) == 1:
                         # deduct the file from previous list (so that it is detected once again until we get a pair)
@@ -243,47 +257,40 @@ def file_watcher(dir: str, poll_time: int):
 
                     # if file does not need pairs according to possible pair extensions or a pair is already found
                     elif len(pair_file) == 0 or len(pair_file) == 2:
-                        
-                        # create directory to move the processed file into
+                        # create directory in 'processed_files_location' to move the processed file into
+                        # that directory is a filename without extension
                         processed_dir_name = os.path.join(processed_files_location, os.path.splitext(f)[0])
                         os.makedirs(processed_dir_name, exist_ok=True)
-                        file_to_pipeline = os.path.join(processed_dir_name, f)
+                        # get prefix of the file
+                        prefix = get_prefix(f)
+                        if prefix != 'error':
+                            # remove prefix from the filename itself
+                            f_no_prefix = f[f.index('_') + 1:]
+                        # generate path to the file in the new 'processed_dir_name' directory
+                        file_to_pipeline = os.path.join(processed_dir_name, f_no_prefix)
+                        # move the file to that new location
                         os.replace(os.path.join(input_dir, f), file_to_pipeline)
                         
                         # move paired file if it is a pair of files
                         if len(pair_file) == 2:
-                            file_pair_to_pipeline = os.path.join(processed_dir_name, pair_file[1])
-                            os.replace(os.path.join(input_dir, pair_file[1]), file_pair_to_pipeline)
                             # remove 2nd file from the pair from dif_list so that it is not processed again
-                            dif_list.remove(pair_file[1])         
+                            dif_list.remove(pair_file[1])
+                            # remove prefix for the filename itself
+                            if prefix != 'error':
+                                pair_file_no_prefix = pair_file[1][pair_file[1].index('_') + 1:]
+                            # generate path to the pair file in the new 'processed_dir_name' directory
+                            file_pair_to_pipeline = os.path.join(processed_dir_name, pair_file_no_prefix)
+                            # move the fair file to that new location
+                            os.replace(os.path.join(input_dir, pair_file[1]), file_pair_to_pipeline)
+                        
+                        # launch the pipeline based on the input file (or a pair)
+                        launch_pipeline(file_to_pipeline, prefix)
 
-                        # launch tb pipeline with bam filetype type if only 1 file
-                        try:
-                            if len(pair_file) == 0:
-                                launch_tb_pipeline(processed_dir_name, 'bam')
-                            # launch tb pipeline with fastq filetype if 2 files
-                            else:
-                                launch_tb_pipeline(processed_dir_name, 'fastq')
-                        except Exception as e:
-                            with open(service_log_file, 'a') as sf:
-                                sf.write(f'{datetime.now().replace(microsecond=0)}: An error while launching the pipeline: {e}\n')
+                except Exception as e:
+                    with open(service_log_file, 'a') as sf:
+                        sf.write(f'{datetime.now().replace(microsecond=0)}: An error while launching the pipeline: {e}\n')    
+   
 
-                    # else write an error into the service log file
-                    else:
-                        with open(service_log_file, 'a') as sf:
-                            sf.write(f'{datetime.now().replace(microsecond=0)}: An error while trying to find if the file needs a pair and/or finding that pair\n')
-
-                # if any other prefix attempt to launch pipeline based on the acquired file and configuration from config.yaml
-                else:
-                    # create directory to move the processed file into
-                    file_to_pipeline = os.path.join(processed_files_location, f)
-                    os.replace(os.path.join(input_dir, f), file_to_pipeline)
-                    # try launching the pipeline and catch error
-                    try:
-                        launch_pipeline(file_to_pipeline)
-                    except Exception as e:
-                        with open(service_log_file, 'a') as sf:
-                            sf.write(f'{datetime.now().replace(microsecond=0)}: An error while launching the pipeline: {e}\n')
                 
 ## function to export tower token if necessary
 def export_tower_token(token):
