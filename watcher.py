@@ -110,7 +110,7 @@ def get_nextflow_run_command(pipeline, input_path, output_path):
     return cmd
 
 # function to launch pipelines
-def launch_pipeline(file, prefix):
+def launch_pipeline(file: str, prefix: str):
     original_location = os.getcwd()
     # get basename of the file
     file_basename = os.path.basename(file)
@@ -166,7 +166,7 @@ def launch_pipeline(file, prefix):
             # input path is the file itself
             input_path = file
             # generate output path in output directory based on file basename without extension
-            output_path = os.path.join(output_dir, os.path.splitext(file_basename)[0])
+            output_path = os.path.join(output_dir, log_filename)
             cmd = get_nextflow_run_command(pipeline, input_path, output_path)
             with open(service_log_file, 'a') as sf:
                 sf.write(f"{datetime.now().replace(microsecond=0)}: Launching pipeline based on prefix: {prefix}. Command: {cmd}\n")
@@ -182,7 +182,7 @@ def launch_pipeline(file, prefix):
         sf.write(f"{datetime.now().replace(microsecond=0)}: No prefix found. See {log_file} for details.\n\n")
     with open(log_file, 'w+') as log_f:
         subprocess.Popen('echo "Not a correct prefix"', stdout=log_f, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
-        
+
 ## detect file pairs based on possible paired file extensions
 # possible file extensions: 
 #   - "*_R{1,2}.fastq.gz"
