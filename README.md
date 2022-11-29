@@ -42,12 +42,12 @@ Overview of the pipeline-specific parameters:
 - prefix: prefix
 - run_command: path to the pipeline main.nf file or path to the repository containing the pipeline.
 - config: path to the pipeline nextflow.config file
-- profile: Docker, Singularity of other profile for the pipeline.
-- version: Nextflow version to use for running the pipeline. Example: '20.11.0-edge'
-- input_type: specifies type of inputs that pipeline takes. Can be either 'directory' or 'file'.
-- input_parameter: name of the input parameter for the pipeline. Example: 'input_dir'
-- output_parameter: name of the input parameter for the pipeline. Example: 'output_dir'
-- with_tower: 'true' if Nextflow Tower Community monitoring is needed for monitoring pipeline runs. Requires 'tower_access_token' and 'tower_address' set in general `config.yaml` parameters. 'false' if Nextflow Tower Community is not needed.
+- profile: Docker, Singularity of other profile for the pipeline. Example: `- profile: 'docker'`
+- version: Nextflow version to use for running the pipeline. Example: `- version: '20.11.0-edge'`
+- input_type: specifies type of inputs that pipeline takes. Can be either 'directory' or 'file'. Example: `- input_type: 'directory'`
+- input_parameter: name of the input parameter for the pipeline. Example: `- input_parameter: 'input_dir'`
+- output_parameter: name of the input parameter for the pipeline. Example: `- output_parameter: 'output_dir'`
+- with_tower: 'true' if Nextflow Tower Community monitoring is needed for monitoring pipeline runs. Requires 'tower_access_token' and 'tower_address' set in general `config.yaml` parameters. 'false' if Nextflow Tower Community is not needed. Example: `- with_tower: false`
 - params: list of pipeline specific parameters. Can be provided here or in `nextflow.config` file supplied in `config` parameter.
 
 ## Running the script in Unix (Ubuntu) environment
@@ -68,3 +68,19 @@ Alternatively script can be run as a Systemd service using the provided `watcher
 ```
 sudo systemctl start watcher.service
 ```
+
+## Nextflow Tower Community
+
+The watcher script is designed with Nextflow Tower Community edition that can optionally be used as a way of monitoring Nextflow pipeline runs.
+
+Please visit the [NF Tower Community GitHub page](https://github.com/seqeralabs/nf-tower) for more details and installation instructions.
+
+In order to use the Nextflow Tower Community, you need to obtain TOWER_ACCESS_TOKEN from the successful installation of the software. Prior to running the watcher script, this token needs to be added as an environment variable in the system using the following command:
+
+```
+export TOWER_ACCESS_TOKEN=<token>
+```
+
+Additionally, the token and Nextflow Tower Community installation IP address needs to be added in the `config.yaml` file (please refer to the instructions above).
+
+Finally, each pipeline that requires Nextflow Tower Community monitoring enabled needs to have `with_tower` parameter set to 'true' in corresponding pipeline configuration in `config.yaml` (please refer to the instruction above). 
