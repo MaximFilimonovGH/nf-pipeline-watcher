@@ -5,7 +5,7 @@ log_dir: /home/ubuntu/pipeline-watcher/logs
 tower_access_token: <Token>
 tower_address: <IP>
 pipelines:
-  - name: 'tb-pipeline'
+  - name: 'lodestone'
     prefix: 'tb'
     run_command: '/home/ubuntu/tb-pipeline/main.nf'
     config: null

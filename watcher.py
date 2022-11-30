@@ -88,7 +88,7 @@ def get_nextflow_run_command(pipeline, input_path, output_path):
             pipeline_input_dir = os.path.abspath(os.path.join(input_path, os.pardir))
             cmd += f" --{pipeline['input_parameter']} {pipeline_input_dir}"
             # 'tb' pipeline specific parameter depending on the number of files
-            if pipeline['prefix'] == 'tb':
+            if pipeline['name'] == 'lodestone':
                 if len(files_in_directory(pipeline_input_dir)) == 2:
                     cmd += f" --filetype fastq"
                     cmd += f" --pattern \"*_R{{1,2}}.fastq.gz\""
