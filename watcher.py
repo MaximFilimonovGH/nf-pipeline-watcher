@@ -54,7 +54,7 @@ def get_prefix(file: str):
         return prefix
 
 ## function to generate command for launching pipeline based on params etc.
-def get_nextflow_run_command(pipeline, input_path, output_path):
+def get_nextflow_run_command(pipeline, input_path, output_path, file: str):
     cmd = ''
     # check if there is a version supplied
     if pipeline['version']:
@@ -87,14 +87,6 @@ def get_nextflow_run_command(pipeline, input_path, output_path):
         if pipeline['input_type'] == 'directory':
             pipeline_input_dir = os.path.abspath(os.path.join(input_path, os.pardir))
             cmd += f" --{pipeline['input_parameter']} {pipeline_input_dir}"
-            # 'tb' pipeline specific parameter depending on the number of files
-            if pipeline['name'] == 'lodestone':
-                if len(files_in_directory(pipeline_input_dir)) == 2:
-                    cmd += f" --filetype fastq"
-                    cmd += f" --pattern \"*_R{{1,2}}.fastq.gz\""
-                else:
-                    cmd += f" --filetype bam"
-
         # input parameter is file
         else:
             cmd += f" --{pipeline['input_parameter']} {input_path}"
@@ -102,6 +94,14 @@ def get_nextflow_run_command(pipeline, input_path, output_path):
     if pipeline['output_parameter']:
         cmd += f" --{pipeline['output_parameter']} {output_path}"
 
+    ## filetype unique parameter if provided
+    if pipeline['filetype']:
+        if pipeline['filetype'] == 'find':
+            ftype = os.path.basename(file).split('.')[1]
+            cmd += f" --filetype {ftype}"
+        else:
+            cmd += f" --filetype {pipeline['filetype']}"
+    
     # add background parameter for nextflow run
     cmd += " -bg"
     return cmd
@@ -163,7 +163,7 @@ def launch_pipeline(file: str, prefix: str):
             input_path = file
             # generate output path in output directory based on file basename without extension
             output_path = os.path.join(output_dir, log_filename)
-            cmd = get_nextflow_run_command(pipeline, input_path, output_path)
+            cmd = get_nextflow_run_command(pipeline, input_path, output_path, file)
             with open(service_log_file, 'a') as sf:
                 sf.write(f"{datetime.now().replace(microsecond=0)}: Launching pipeline based on prefix: {prefix}. Command: {cmd}\n")
                 sf.write(f"{datetime.now().replace(microsecond=0)}: See {log_file} for details.\n")
@@ -285,15 +285,5 @@ def file_watcher(dir: str, poll_time: int):
                 except Exception as e:
                     with open(service_log_file, 'a') as sf:
                         sf.write(f'{datetime.now().replace(microsecond=0)}: An error while launching the pipeline: {e}\n')    
-                
-## function to export tower token if necessary
-def export_tower_token(token):
-    try:
-        if os.getenv('TOWER_ACCESS_TOKEN') is None:
-            subprocess.run(f'export TOWER_ACCESS_TOKEN={token}', stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
-        return 1
-    except:
-        return 0
 
-# export_tower_token(tower_access_token)
 file_watcher(input_dir, 3)
