@@ -1,0 +1,7 @@
+name: pipeline-watcher
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pyyaml
+prefix: pipeline-watcher

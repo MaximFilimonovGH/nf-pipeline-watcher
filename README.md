@@ -30,12 +30,11 @@ Overview of the parameters:
 - input_dir: path to the watched folder
 - output_dir: path to the folder containing results
 - log_dir: path to the folder containing logs of the Nextflow runs
-- tower_access_token: Nextflow Tower Community access token. (Required if Nextflow Tower Community is used to monitor pipelines' execution)
 - tower_address: IP address of the Nextflow Tower Community deployment.
 
 ### Pipelines configuration
 
-Pipeline configuration for each pipeline is set in the same `config.yaml` file in the `pipelines` list parameter.
+Pipeline configuration for each pipeline is set in the same `config.yaml` file in the `pipelines` list parameter. If a parameter is not supplied it will be skipped while forming the Nextflow run command.
 
 Overview of the pipeline-specific parameters:
 - name: name of the pipeline
@@ -47,21 +46,32 @@ Overview of the pipeline-specific parameters:
 - input_type: specifies type of inputs that pipeline takes. Can be either 'directory' or 'file'. Example: `- input_type: 'directory'`
 - input_parameter: name of the input parameter for the pipeline. Example: `- input_parameter: 'input_dir'`
 - output_parameter: name of the input parameter for the pipeline. Example: `- output_parameter: 'output_dir'`
+- filetype: will add `--filetype` parameter to the nextflow run command if provided. Can be set to `'find'`, then the Watcher script will attempt to find the filetype automatically based on inputs.
 - with_tower: 'true' if Nextflow Tower Community monitoring is needed for monitoring pipeline runs. Requires 'tower_access_token' and 'tower_address' set in general `config.yaml` parameters. 'false' if Nextflow Tower Community is not needed. Example: `- with_tower: false`
 - params: list of pipeline specific parameters. Can be provided here or in `nextflow.config` file supplied in `config` parameter.
 
 ## Running the script in Unix (Ubuntu) environment
 
-Script can be run directly in Ubuntu system in background using the following command:
+Script can be run directly in Ubuntu system in background.
+
+If Nextflow Tower Community is used to monitor pipelines' execution, then TOWER_ACCESS_TOKEN environment variable should be set prior to running the script by using the following command:
+```
+export TOWER_ACCESS_TOKEN=ABCXYZ
+```
+
+Then the Watcher script can be run by using the following command:
 
 ```
 nohup python3 -u watcher.py &
 ```
 
+### Running the Watcher script as a Systemd service
+
 Alternatively script can be run as a Systemd service using the provided `watcher.service` file as a template. Some system-specific changes are needed in the file prior to running the service:
 - WorkingDirectory: path to the folder containing the `watcher.py` script and `config.yaml` file. Example: `/home/ubuntu/pipeline-watcher`
 - ExecStart: path to the python3 and `watcher.py` script. Example: `/usr/bin/python3 /home/ubuntu/pipeline-watcher/watcher.py`
-- Environment: environment variable set to $HOME. Example: `HOME=/home/ubuntu`
+- Environment $HOME variable: environment variable set to $HOME. Example: `Environment=HOME=/home/ubuntu`
+- Environment $TOWER_ACCESS_TOKEN variable: environment variable with Nextflow Tower access token. Required if Nextflow Tower Community is used to monitor pipelines' execution. Example: `Environment=TOWER_ACCESS_TOKEN=ABCXYZ`
 
 `watcher.service` needs to places in `/etc/systemd/system/` folder, then it can be run with the following command:
 
