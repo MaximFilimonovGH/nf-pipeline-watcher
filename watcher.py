@@ -15,9 +15,7 @@ nextflow_path = config['nextflow_path']
 input_dir = config['input_dir']
 output_dir = config['output_dir']
 log_dir = config['log_dir']
-tower_access_token = config['tower_access_token']
 tower_address = config['tower_address']
-# tb_pipeline = config['tb-pipeline']
 pipelines = config['pipelines']
 
 service_log_file = os.path.join(log_dir, 'service.log')
@@ -57,50 +55,58 @@ def get_prefix(file: str):
 def get_nextflow_run_command(pipeline, input_path, output_path, file: str):
     cmd = ''
     # check if there is a version supplied
-    if pipeline['version']:
-        cmd = f"NXF_VER={pipeline['version']} {nextflow_path} run"
-    else:
-        cmd = f"{nextflow_path} run"
+    if 'version' in pipeline:
+        if pipeline['version']:
+            cmd = f"NXF_VER={pipeline['version']} {nextflow_path} run"
+        else:
+            cmd = f"{nextflow_path} run"
     # add main pipeline command
     cmd += f" {pipeline['run_command']}"
     # add profile string if supplied
-    if pipeline['profile']:
-        cmd += f" -profile {pipeline['profile']}"
+    if 'profile' in pipeline:
+        if pipeline['profile']:
+            cmd += f" -profile {pipeline['profile']}"
     # add config string if supplied
-    if pipeline['config']:
-        cmd += f" -config {pipeline['config']}"
+    if 'config' in pipeline:
+        if pipeline['config']:
+            cmd += f" -config {pipeline['config']}"
     # check if tower is needed
-    if pipeline['with_tower']:
-        if pipeline['with_tower'] == True:
-            cmd += f" -with-tower {tower_address}"
+    if 'with_tower' in pipeline:
+        if pipeline['with_tower']:
+            if pipeline['with_tower'] == True:
+                cmd += f" -with-tower {tower_address}"
     ## form parameters string is supplied
-    if pipeline['params']:
-        param_string = ''
-        for param in pipeline['params']:
-            param_string += f" --{list(param.keys())[0]} {param[list(param.keys())[0]]}"
-        # add params to cmd
-        cmd += param_string
+    if 'params' in pipeline:
+        if pipeline['params']:
+            param_string = ''
+            for param in pipeline['params']:
+                param_string += f" --{list(param.keys())[0]} {param[list(param.keys())[0]]}"
+            # add params to cmd
+            cmd += param_string
     ## process input parameter
     # check the name of the input parameter for the pipeline
-    if pipeline['input_parameter']:
-        # input parameter is a directory, adjust input_path accordingly
-        if pipeline['input_type'] == 'directory':
-            pipeline_input_dir = os.path.abspath(os.path.join(input_path, os.pardir))
-            cmd += f" --{pipeline['input_parameter']} {pipeline_input_dir}"
-        # input parameter is file
-        else:
-            cmd += f" --{pipeline['input_parameter']} {input_path}"
+    if 'input_parameter' in pipeline:
+        if pipeline['input_parameter']:
+            # input parameter is a directory, adjust input_path accordingly
+            if pipeline['input_type'] == 'directory':
+                pipeline_input_dir = os.path.abspath(os.path.join(input_path, os.pardir))
+                cmd += f" --{pipeline['input_parameter']} {pipeline_input_dir}"
+            # input parameter is file
+            else:
+                cmd += f" --{pipeline['input_parameter']} {input_path}"
     # check for output parameter name and append it
-    if pipeline['output_parameter']:
-        cmd += f" --{pipeline['output_parameter']} {output_path}"
+    if 'output_parameter' in pipeline:
+        if pipeline['output_parameter']:
+            cmd += f" --{pipeline['output_parameter']} {output_path}"
 
     ## filetype unique parameter if provided
-    if pipeline['filetype']:
-        if pipeline['filetype'] == 'find':
-            ftype = os.path.basename(file).split('.')[1]
-            cmd += f" --filetype {ftype}"
-        else:
-            cmd += f" --filetype {pipeline['filetype']}"
+    if 'filetype' in pipeline:
+        if pipeline['filetype']:
+            if pipeline['filetype'] == 'find':
+                ftype = os.path.basename(file).split('.')[1]
+                cmd += f" --filetype {ftype}"
+            else:
+                cmd += f" --filetype {pipeline['filetype']}"
     
     # add background parameter for nextflow run
     cmd += " -bg"

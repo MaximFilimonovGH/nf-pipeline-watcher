@@ -7,6 +7,7 @@ Type=simple
 WorkingDirectory=/home/ubuntu/pipeline-watcher
 ExecStart=/usr/bin/python3 /home/ubuntu/pipeline-watcher/watcher.py
 Environment=HOME=/home/ubuntu
+Environment=TOWER_ACCESS_TOKEN=token
 RemainAfterExit=True
 
 [Install]

@@ -2,7 +2,6 @@ nextflow_path: /home/ubuntu/nextflow/nextflow
 input_dir: /home/ubuntu/pipeline-watcher/input
 output_dir: /home/ubuntu/pipeline-watcher/output
 log_dir: /home/ubuntu/pipeline-watcher/logs
-tower_access_token: <Token>
 tower_address: <IP>
 pipelines:
   - name: 'lodestone'
@@ -15,6 +14,7 @@ pipelines:
     input_parameter: 'input_dir'
     output_parameter: 'output_dir'
     with_tower: false
+    filetype: 'find'
     params:
       - unmix_myco: 'no'
       - kraken_db: 'kraken'
@@ -41,6 +41,7 @@ pipelines:
     input_parameter: null
     output_parameter: 'outdir'
     with_tower: false
+    filetype: null
     params: null
   - name: 'nf-core/smrnaseq'
     prefix: 'smrnaseq'
