@@ -13,6 +13,7 @@ pipelines:
     input_type: 'directory'
     input_parameter: 'input_dir'
     output_parameter: 'output_dir'
+    multiple_inputs: false
     with_tower: false
     filetype: 'find'
     params:

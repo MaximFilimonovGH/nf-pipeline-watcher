@@ -46,6 +46,7 @@ Overview of the pipeline-specific parameters:
 - input_type: specifies type of inputs that pipeline takes. Can be either 'directory' or 'file'. Example: `- input_type: 'directory'`
 - input_parameter: name of the input parameter for the pipeline. Example: `- input_parameter: 'input_dir'`
 - output_parameter: name of the input parameter for the pipeline. Example: `- output_parameter: 'output_dir'`
+- multiple_inputs: if set to `true` the script will process all the inputs with the same prefix at the same time. if set to `false` the script will process all the inputs with independent pipeline runs. `false` by default. Example: `- multiple_inputs: false`
 - filetype: will add `--filetype` parameter to the nextflow run command if provided. Can be set to `'find'`, then the Watcher script will attempt to find the filetype automatically based on inputs. Example: `- filetype: 'fastq'`
 - with_tower: 'true' if Nextflow Tower Community monitoring is needed for monitoring pipeline runs. Requires 'tower_access_token' and 'tower_address' set in general `config.yaml` parameters. 'false' if Nextflow Tower Community is not needed. Example: `- with_tower: false`
 - params: list of pipeline specific parameters. Can be provided here or in `nextflow.config` file supplied in `config` parameter.
