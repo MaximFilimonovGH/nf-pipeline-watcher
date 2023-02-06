@@ -64,6 +64,10 @@ def get_nextflow_run_command(pipeline, input_path, output_path):
                 cmd = f"{nextflow_path} run"
         # add main pipeline command
         cmd += f" {pipeline['run_command']}"
+        # add name if supplied
+        if 'name' in pipeline:
+            if pipeline['name']:
+                cmd += f" -name {pipeline['name']}"
         # add profile string if supplied
         if 'profile' in pipeline:
             if pipeline['profile']:
@@ -142,7 +146,7 @@ def get_nextflow_run_command(pipeline, input_path, output_path):
         return 'error'
 
 # function to launch pipelines
-def launch_pipeline(input_path: str, prefix: str):
+def launch_pipeline(input_path: str, output_path: str, prefix: str):
     original_location = os.getcwd()
     # get basename of the input path
     input_path_basename = os.path.basename(input_path)
@@ -194,15 +198,12 @@ def launch_pipeline(input_path: str, prefix: str):
     for pipeline in pipelines:
         # if prefix is found then form a command to launch
         if prefix.lower() == pipeline['prefix']:
-            # generate output path in output directory based on file basename without extension
-            output_path = os.path.join(output_dir, os.path.basename(input_path))
             cmd = get_nextflow_run_command(pipeline, input_path, output_path)
             with open(service_log_file, 'a') as sf:
                 sf.write(f"{datetime.now().replace(microsecond=0)}: Launching pipeline based on prefix: {prefix}. Command: {cmd}\n")
                 sf.write(f"{datetime.now().replace(microsecond=0)}: See {log_file} for details.\n")
             with open(log_file, 'w+') as log_f:
                 # with open(err_file, 'w+') as err_f:
-                # log_f.write(f"Log file working?")
                 subprocess.Popen(cmd, stdout=log_f, stderr=subprocess.STDOUT, universal_newlines=True, shell=True, cwd=run_location)
             return
 
@@ -326,14 +327,16 @@ def file_watcher(dir: str, poll_time: int):
                         break
 
                 ## get current time and date
-                current_time = datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+                current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                ## get output path with output_dir parameter + time
+                output_path = os.path.join(output_dir, f"{prefix}_{current_time}")
                 ## copy the current file into processed directory
                 # get filename without extension
                 f_no_extension = os.path.splitext(f)[0]
                 # create directory in 'processed_files_location' to move the processed file(s) into
                 # directory name is the prefix itself + filename without extension + datetime for single input
                 if not multiple_inputs:
-                    processed_dir_path = os.path.join(processed_files_location, f"{f_no_extension}_{current_time}")
+                    processed_dir_path = os.path.join(processed_files_location, f"{prefix}_{current_time}")
                 # directory name is the prefix itself + datetime for multiple inputs
                 else:
                     processed_dir_path = os.path.join(processed_files_location, f"{prefix}_{current_time}")
@@ -389,9 +392,11 @@ def file_watcher(dir: str, poll_time: int):
                                         # remove 2nd file from the pair from dif_list so that it is not processed again
                                         dif_list.remove(pair_file_2[1])
 
+
+
                 ## launch the pipeline based on the input path
                 try:
-                    launch_pipeline(processed_dir_path, prefix)
+                    launch_pipeline(processed_dir_path, output_path, prefix)
                 except Exception as e:
                     with open(service_log_file, 'a') as sf:
                         sf.write(f'{datetime.now().replace(microsecond=0)}: An error while launching the pipeline for {processed_dir_path}: {e}\n')
