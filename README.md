@@ -86,6 +86,12 @@ The watcher script is designed with Nextflow Tower Community edition that can op
 
 Please visit the [NF Tower Community GitHub page](https://github.com/seqeralabs/nf-tower) for more details and installation instructions.
 
+![Pipeline Run](/images/tower_pipeline.png?raw=true "Nextflow Tower Pipeline Run Monitoring")
+
+*Nextflow Tower pipeline run real-time monitoring*
+
+<br />
+
 In order to use the Nextflow Tower Community, you need to obtain TOWER_ACCESS_TOKEN from the successful installation of the software. Prior to running the watcher script, this token needs to be added as an environment variable in the system using the following command:
 
 ```
@@ -95,3 +101,8 @@ export TOWER_ACCESS_TOKEN=<token>
 Additionally, the token and Nextflow Tower Community installation IP address needs to be added in the `config.yaml` file (please refer to the instructions above).
 
 Finally, each pipeline that requires Nextflow Tower Community monitoring enabled needs to have `with_tower` parameter set to 'true' in corresponding pipeline configuration in `config.yaml` (please refer to the instruction above). 
+
+
+![Runs](/images/tower_runs.png?raw=true "Nextflow Tower Pipeline Runs")
+
+*Nextflow Tower pipeline runs*
