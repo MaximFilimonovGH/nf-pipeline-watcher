@@ -3,6 +3,7 @@ input_dir: /home/ubuntu/pipeline-watcher/input
 output_dir: /home/ubuntu/pipeline-watcher/output
 log_dir: /home/ubuntu/pipeline-watcher/logs
 tower_address: <IP>
+poll_time: 30
 pipelines:
   - name: 'lodestone'
     prefix: 'tb'

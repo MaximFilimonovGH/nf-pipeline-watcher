@@ -17,6 +17,7 @@ output_dir = config['output_dir']
 log_dir = config['log_dir']
 tower_address = config['tower_address']
 pipelines = config['pipelines']
+watcher_poll_time = config['poll_time']
 
 service_log_file = os.path.join(log_dir, 'service.log')
 processed_files_location = os.path.join(output_dir, 'processed')
@@ -402,4 +403,4 @@ def file_watcher(dir: str, poll_time: int):
                         sf.write(f'{datetime.now().replace(microsecond=0)}: An error while launching the pipeline for {processed_dir_path}: {e}\n')
 
 if __name__ == "__main__":
-    file_watcher(input_dir, 5)
+    file_watcher(input_dir, watcher_poll_time)

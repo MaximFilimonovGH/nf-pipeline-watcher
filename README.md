@@ -26,6 +26,7 @@ pip3 install -r requirements.txt
 Configuration parameters for the watcher software are set in `config.yaml` file. Those parameters must be set prior to launching the script.
 
 Overview of the parameters:
+- poll_time: poll time in seconds
 - nextflow_path: path to the Nextflow installation
 - input_dir: path to the watched folder
 - output_dir: path to the folder containing results
