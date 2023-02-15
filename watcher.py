@@ -65,10 +65,9 @@ def get_nextflow_run_command(pipeline, input_path, output_path):
                 cmd = f"{nextflow_path} run"
         # add main pipeline command
         cmd += f" {pipeline['run_command']}"
-        # add name if supplied
-        if 'name' in pipeline:
-            if pipeline['name']:
-                cmd += f" -name {pipeline['name']}"
+        ## add name to the pipeline run
+        pipeline_run_name = f"{os.path.splitext(os.path.basename(input_path))[0]}"
+        cmd += f" -name {pipeline_run_name}"
         # add profile string if supplied
         if 'profile' in pipeline:
             if pipeline['profile']:
@@ -332,24 +331,18 @@ def file_watcher(dir: str, poll_time: int):
                 ## get output path with output_dir parameter + time
                 output_path = os.path.join(output_dir, f"{prefix}_{current_time}")
                 ## copy the current file into processed directory
-                # get filename without extension
-                f_no_extension = os.path.splitext(f)[0]
                 # create directory in 'processed_files_location' to move the processed file(s) into
-                # directory name is the prefix itself + filename without extension + datetime for single input
-                if not multiple_inputs:
-                    processed_dir_path = os.path.join(processed_files_location, f"{prefix}_{current_time}")
-                # directory name is the prefix itself + datetime for multiple inputs
-                else:
-                    processed_dir_path = os.path.join(processed_files_location, f"{prefix}_{current_time}")
-                    # check if that directory exists and add a number if needed
-                    if os.path.exists(processed_dir_path):
-                        i = 1
-                        while i <= 100: # to avoid infinite loop
-                            processed_dir_path = os.path.join(processed_files_location, f"{prefix}_{current_time}_{i}")
-                            if os.path.exists(processed_dir_path):
-                                i += 1
-                            else:
-                                break
+                # directory name is the prefix itself + datetime
+                processed_dir_path = os.path.join(processed_files_location, f"{prefix}_{current_time}")
+                # check if that directory exists and add a number if needed
+                if os.path.exists(processed_dir_path):
+                    i = 1
+                    while i <= 100: # to avoid infinite loop
+                        processed_dir_path = os.path.join(processed_files_location, f"{prefix}_{current_time}_{i}")
+                        if os.path.exists(processed_dir_path):
+                            i += 1
+                        else:
+                            break
 
                 # create that directory if not exists
                 os.makedirs(processed_dir_path, exist_ok=True)                          
