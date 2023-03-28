@@ -177,22 +177,6 @@ def launch_pipeline(input_path: str, output_path: str, prefix: str):
         with open(log_file, 'w+') as log_f:
             subprocess.Popen(cmd, stdout=log_f, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
         return
-    elif prefix.lower() == 'path':
-        cmd = 'echo $PATH'
-        with open(service_log_file, 'a') as sf:
-            sf.write(f"{datetime.now().replace(microsecond=0)}: Launching test '{cmd}' command\n")
-            sf.write(f"{datetime.now().replace(microsecond=0)}: See {log_file} for details.\n")
-        with open(log_file, 'w+') as log_f:
-            subprocess.Popen(cmd, stdout=log_f, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
-        return
-    elif prefix.lower() == 'home':
-        cmd = 'echo $HOME'
-        with open(service_log_file, 'a') as sf:
-            sf.write(f"{datetime.now().replace(microsecond=0)}: Launching test '{cmd}' command\n")
-            sf.write(f"{datetime.now().replace(microsecond=0)}: See {log_file} for details.\n")
-        with open(log_file, 'w+') as log_f:
-            subprocess.Popen(cmd, stdout=log_f, stderr=subprocess.STDOUT, universal_newlines=True, shell=True)
-        return
 
     # cycle through pipelines if not any of the testing prefixes
     for pipeline in pipelines:
