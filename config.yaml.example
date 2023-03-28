@@ -2,15 +2,14 @@ nextflow_path: /home/ubuntu/nextflow/nextflow
 input_dir: /home/ubuntu/pipeline-watcher/input
 output_dir: /home/ubuntu/pipeline-watcher/output
 log_dir: /home/ubuntu/pipeline-watcher/logs
-tower_address: <IP>
+tower_address: https://api.tower.nf
 poll_time: 30
 pipelines:
   - name: 'lodestone'
-    prefix: 'tb'
-    run_command: '/home/ubuntu/tb-pipeline/main.nf'
+    prefix: 'lodestone'
+    run_command: 'https://github.com/Pathogen-Genomics-Cymru/lodestone -r main'
     config: null
     profile: 'docker'
-    version: '20.11.0-edge'
     input_type: 'directory'
     input_parameter: 'input_dir'
     output_parameter: 'output_dir'
@@ -22,17 +21,8 @@ pipelines:
       - kraken_db: 'kraken'
       - bowtie2_index: 'bowtie2_index'
       - bowtie_index_name: 'bowtie_index_name'
-  - name: 'tb-pipeline/stub'
-    prefix: 'tb-stub'
-    run_command: '/home/ubuntu/tb-pipeline/main.nf -stub'
-    config: '/home/ubuntu/tb-pipeline/testing.config'
-    profile: null
-    version: '20.11.0-edge'
-    input_type: null
-    input_parameter: null
-    output_parameter: null
-    with_tower: false
-    params: null
+      - afanc_myco_db: 'afanc_db'
+      - pattern: '*_R{1,2}.fastq.gz'
   - name: 'nf-core/scrnaseq'
     prefix: 'scrnaseq'
     run_command: 'nf-core/scrnaseq'
