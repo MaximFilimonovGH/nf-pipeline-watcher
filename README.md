@@ -81,6 +81,14 @@ Alternatively script can be run as a Systemd service using the provided `watcher
 sudo systemctl start watcher.service
 ```
 
+In order to reload the service after adjusting `config.yaml` use the following commands:
+
+```
+sudo systemctl stop watcher.service
+sudo systemctl daemon-reload
+sudo systemctl start watcher.service
+```
+
 ## Nextflow Tower Community
 
 The watcher script is designed with Nextflow Tower Community edition that can optionally be used as a way of monitoring Nextflow pipeline runs.
